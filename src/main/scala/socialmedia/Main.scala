@@ -1,4 +1,4 @@
-package socialmedia.user
+package socialmedia
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.ActorSystem
@@ -9,7 +9,7 @@ import scala.util.control.NonFatal
 
 object Main {
 
-  val logger = LoggerFactory.getLogger("socialmedia.user.Main")
+  val logger = LoggerFactory.getLogger("socialmedia.userregister.Main")
 
   def main(args: Array[String]): Unit = {
     val system = ActorSystem[Nothing](Behaviors.empty, "ShoppingCartService")

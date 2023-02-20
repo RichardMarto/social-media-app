@@ -1,4 +1,4 @@
-package socialmedia.user.repository
+package socialmedia.repository
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.config.Config
@@ -57,7 +57,7 @@ object ScalikeJdbcSetup {
 
     dataSource.setDriverClassName(config.getString("driver"))
     dataSource.setJdbcUrl(config.getString("url"))
-    dataSource.setUsername(config.getString("user"))
+    dataSource.setUsername(config.getString("userregister"))
     dataSource.setPassword(config.getString("password"))
 
     dataSource
