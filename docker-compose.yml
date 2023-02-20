@@ -5,5 +5,7 @@ services:
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: $$Wsab2b&irLG6
-      POSTGRES_PASSWORD: vf^dwX6KyPF!n7
+      POSTGRES_DB: social-media
+      POSTGRES_USER: social-media
+      POSTGRES_PASSWORD: social-media
+

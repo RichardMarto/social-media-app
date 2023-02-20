@@ -6,6 +6,7 @@ import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import org.slf4j.LoggerFactory
 import socialmedia.adapters.service.{UserRegistrationServer, UserRegistrationServiceImpl}
+import socialmedia.core.user.UserRegistration
 
 import scala.util.control.NonFatal
 
@@ -27,12 +28,12 @@ object Main {
   def init(system: ActorSystem[_]): Unit = {
     AkkaManagement(system).start()
     ClusterBootstrap(system).start()
-
+    UserRegistration.init(system)
     val grpcInterface =
-      system.settings.config.getString("user-registering-service.grpc.interface")
+      system.settings.config.getString("user-registration-service.grpc.interface")
     val grpcPort =
-      system.settings.config.getInt("user-registering-service.grpc.port")
-    val grpcService = new UserRegistrationServiceImpl
+      system.settings.config.getInt("user-registration-service.grpc.port")
+    val grpcService = new UserRegistrationServiceImpl(system)
     UserRegistrationServer.start(
       grpcInterface,
       grpcPort,
