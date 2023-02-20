@@ -6,13 +6,13 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import com.typesafe.config.ConfigFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
-import socialmedia.user.UserRegister
+import socialmedia.user.{User, UserRegister}
 
 object UserRegisterSpec {
   val config = ConfigFactory
     .parseString("""
       akka.actor.serialization-bindings {
-        "shopping.cart.CborSerializable" = jackson-cbor
+        "socialmedia.CborSerializable" = jackson-cbor
       }
       """)
     .withFallback(EventSourcedBehaviorTestKit.config)
@@ -22,37 +22,26 @@ class UserRegisterSpec extends ScalaTestWithActorTestKit(UserRegisterSpec.config
   with AnyWordSpecLike
   with BeforeAndAfterEach {
 
-  private val cartId = "testCart"
+  private val aUser = User("Test Testson", "test_testson@testmail.com")
+
+  private val userRegisterId = "userRegister"
   private val eventSourcedTestKit =
     EventSourcedBehaviorTestKit[
       Command,
       Event,
-      UserRegister.State](system, UserRegister)
+      UserRegister.State](system, UserRegister(userRegisterId))
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     eventSourcedTestKit.clear()
   }
 
-  "The Shopping Cart" should {
+  "The User Register" should {
 
-    "add item" in {
-      val result1 =
-        eventSourcedTestKit.runCommand[StatusReply[ShoppingCart.Summary]](
-          replyTo => ShoppingCart.AddItem("foo", 42, replyTo))
-      result1.reply should ===(
-        StatusReply.Success(ShoppingCart.Summary(Map("foo" -> 42))))
-      result1.event should ===(ShoppingCart.ItemAdded(cartId, "foo", 42))
+    "register a new user" in {
+      val result = eventSourcedTestKit.runCommand[StatusReply[User]](replyTo => UserRegister.RegisterUser(aUser, replyTo))
+      result.reply should ===(StatusReply.Success(aUser))
+      result.event should ===(UserRegister.UserRegistered(userRegisterId, aUser))
     }
-
-    "reject already added item" in {
-      val result1 =
-        eventSourcedTestKit.runCommand[StatusReply[ShoppingCart.Summary]](
-          ShoppingCart.AddItem("foo", 42, _))
-      result1.reply.isSuccess should ===(true)
-      val result2 =
-        eventSourcedTestKit.runCommand[StatusReply[ShoppingCart.Summary]](
-          ShoppingCart.AddItem("foo", 13, _))
-      result2.reply.isError should ===(true)
-    }
+  }
 }
