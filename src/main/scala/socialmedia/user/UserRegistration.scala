@@ -11,15 +11,15 @@ import socialmedia.{CborSerializable, Command, Event}
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
 
-object UserRegister {
+object UserRegistration {
   private val log = LoggerFactory.getLogger(getClass)
 
   val EntityKey: EntityTypeKey[Command] =
-    EntityTypeKey[Command]("UserRegister")
+    EntityTypeKey[Command]("UserRegistration")
 
   def init(system: ActorSystem[_]): Unit = {
     ClusterSharding(system).init(Entity(EntityKey) { entityContext =>
-      UserRegister(entityContext.entityId)
+      UserRegistration(entityContext.entityId)
     })
   }
 
