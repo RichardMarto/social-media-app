@@ -1,4 +1,4 @@
-package socialmedia
+package socialmedia.core
 
 /**
  * Marker trait for serialization with Jackson CBOR.

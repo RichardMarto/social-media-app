@@ -1,5 +1,5 @@
-package socialmedia.user
+package socialmedia.core.user
 
-import socialmedia.CborSerializable
+import socialmedia.core.CborSerializable
 
 case class User(name: String, email: String) extends CborSerializable

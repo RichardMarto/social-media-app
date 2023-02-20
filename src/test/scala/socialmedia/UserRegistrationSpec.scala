@@ -6,13 +6,14 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import com.typesafe.config.ConfigFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
-import socialmedia.user.{User, UserRegistration}
+import socialmedia.core.{Command, Event}
+import socialmedia.core.user.{User, UserRegistration}
 
 object UserRegistrationSpec {
   val config = ConfigFactory
     .parseString("""
       akka.actor.serialization-bindings {
-        "socialmedia.CborSerializable" = jackson-cbor
+        "socialmedia.core.CborSerializable" = jackson-cbor
       }
       """)
     .withFallback(EventSourcedBehaviorTestKit.config)

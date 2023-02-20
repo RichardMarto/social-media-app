@@ -1,12 +1,12 @@
-package socialmedia.user
+package socialmedia.core.user
 
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, SupervisorStrategy}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.pattern.StatusReply
-import akka.persistence.typed.{PersistenceId}
+import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect, RetentionCriteria}
 import org.slf4j.LoggerFactory
-import socialmedia.{CborSerializable, Command, Event}
+import socialmedia.core.{CborSerializable, Command, Event}
 
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
