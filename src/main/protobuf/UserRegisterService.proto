@@ -7,6 +7,7 @@ package socialmedia;
 
 service UserRegistrationService {
     rpc RegisterUser (RegisterUserRequest) returns (User) {}
+    rpc PostPost (PostPostRequest) returns (Post) {}
 }
 
 message RegisterUserRequest {
@@ -14,7 +15,21 @@ message RegisterUserRequest {
     string email = 2;;
 }
 
+message PostPostRequest {
+    string content = 1;
+    string image = 2;
+    string date = 3;
+    string author = 4;
+}
+
 message User {
     string name = 1;
     string email = 2;
+}
+
+message Post {
+    string content = 1;
+    string image = 2;
+    string date = 3;
+    string author = 4;
 }
