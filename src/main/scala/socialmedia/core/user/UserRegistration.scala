@@ -8,6 +8,7 @@ import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffec
 import org.slf4j.LoggerFactory
 import socialmedia.core.{CborSerializable, Command, Event}
 
+import scala.collection.mutable
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
 
@@ -28,7 +29,7 @@ object UserRegistration {
       .withEnforcedReplies[Command, Event, State](
         persistenceId = PersistenceId(EntityKey.name, userRegisterId),
         emptyState = State.empty,
-        commandHandler = (state, command) => handleCommand(userRegisterId, state, command),
+        commandHandler = (state, command) => handleCommand(state, command),
         eventHandler = (state, event) => handleEvent(state, event))
       .withRetention(RetentionCriteria
         .snapshotEvery(numberOfEvents = 100, keepNSnapshots = 3))
@@ -37,37 +38,51 @@ object UserRegistration {
       )
   }
 
-  final case class State(users: HashMap[String, User]) extends CborSerializable {
+  final case class State(users: mutable.HashMap[String, User], posts: mutable.HashMap[String, Post]) extends CborSerializable {
 
     def update(user: User): State = {
       users += (user.email -> user)
       this
     }
+    def update(email: String, post: Post): State = {
+      posts += (email -> post)
+      this
+    }
+    def hasUser(email: String): Boolean = users.contains(email)
 
-    def hasUser(user: User): Boolean = users.contains(user.email)
   }
 
   object State {
-    val empty = State(users = HashMap.empty)
+    val empty = State(users = mutable.HashMap.empty, posts = mutable.HashMap.empty)
   }
 
   final case class RegisterUser(user: User, replyTo: ActorRef[StatusReply[User]]) extends Command
-  final case class UserRegistered(userRegisterId:String, user: User) extends Event
+  final case class PostPost(email: String, post: Post, replyTo: ActorRef[StatusReply[Post]]) extends Command
+  final case class UserRegistered(user: User) extends Event
+  final case class PostPosted(email: String, post: Post) extends Event
 
-  private def handleCommand(userRegisterId: String, state: State, command: Command): ReplyEffect[Event, State] = {
+  private def handleCommand(state: State, command: Command): ReplyEffect[Event, State] = {
     command match {
       case RegisterUser(user, replyTo) => {
-        if (state.hasUser(user)) Effect.reply(replyTo)(StatusReply.Error("Email already in use."))
-        else Effect.persist(UserRegistered(userRegisterId, user)).thenReply(replyTo) {
+        if (state.hasUser(user.email)) Effect.reply(replyTo)(StatusReply.Error("Email already in use."))
+        else Effect.persist(UserRegistered(user)).thenReply(replyTo) {
           state => StatusReply.success(state.users(user.email))
         }
+      }
+      case PostPost(email, post, replyTo) => {
+        if (state.hasUser(email))
+          Effect.persist(PostPosted(email, post)).thenReply(replyTo) {
+            _ => StatusReply.success(post)
+          }
+        else Effect.reply(replyTo)(StatusReply.Error("User don't exist."))
       }
     }
   }
 
   private def handleEvent(state: State, event: Event): State = {
     event match {
-      case UserRegistered(_, user) => state.update(user)
+      case UserRegistered(user) => state.update(user)
+      case PostPosted(email, post) => state.update(email, post)
     }
   }
 }
