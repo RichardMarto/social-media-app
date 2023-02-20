@@ -23,6 +23,8 @@ class UserRegisterSpec extends ScalaTestWithActorTestKit(UserRegisterSpec.config
   with BeforeAndAfterEach {
 
   private val aUser = User("Test Testson", "test_testson@testmail.com")
+  private val anotherUser = User("Test Testson jr", "test.jr@testmail.com")
+  private val anotherUserWithDuplicatedEmail = User("Test Testson 3rd", "test_testson@testmail.com")
 
   private val userRegisterId = "userRegister"
   private val eventSourcedTestKit =
@@ -42,6 +44,23 @@ class UserRegisterSpec extends ScalaTestWithActorTestKit(UserRegisterSpec.config
       val result = eventSourcedTestKit.runCommand[StatusReply[User]](replyTo => UserRegister.RegisterUser(aUser, replyTo))
       result.reply should ===(StatusReply.Success(aUser))
       result.event should ===(UserRegister.UserRegistered(userRegisterId, aUser))
+    }
+
+    "register multiple users with different emails" in {
+      val result = eventSourcedTestKit.runCommand[StatusReply[User]](replyTo => UserRegister.RegisterUser(aUser, replyTo))
+      result.reply should ===(StatusReply.Success(aUser))
+      result.event should ===(UserRegister.UserRegistered(userRegisterId, aUser))
+      val secondResult = eventSourcedTestKit.runCommand[StatusReply[User]](replyTo => UserRegister.RegisterUser(anotherUser, replyTo))
+      secondResult.reply should ===(StatusReply.Success(anotherUser))
+      secondResult.event should ===(UserRegister.UserRegistered(userRegisterId, anotherUser))
+    }
+
+    "throw an error when registering multiple users with duplicated email" in {
+      val result = eventSourcedTestKit.runCommand[StatusReply[User]](replyTo => UserRegister.RegisterUser(aUser, replyTo))
+      result.reply should ===(StatusReply.Success(aUser))
+      result.event should ===(UserRegister.UserRegistered(userRegisterId, aUser))
+      val secondResult = eventSourcedTestKit.runCommand[StatusReply[User]](replyTo => UserRegister.RegisterUser(anotherUserWithDuplicatedEmail, replyTo))
+      secondResult.reply.isError should ===(true)
     }
   }
 }

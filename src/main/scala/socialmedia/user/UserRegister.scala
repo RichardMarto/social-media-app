@@ -3,7 +3,7 @@ package socialmedia.user
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, SupervisorStrategy}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.pattern.StatusReply
-import akka.persistence.typed.PersistenceId
+import akka.persistence.typed.{PersistenceId}
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect, RetentionCriteria}
 import org.slf4j.LoggerFactory
 import socialmedia.{CborSerializable, Command, Event}
@@ -43,6 +43,8 @@ object UserRegister {
       users += (user.email -> user)
       this
     }
+
+    def hasUser(user: User): Boolean = users.contains(user.email)
   }
 
   object State {
@@ -54,8 +56,11 @@ object UserRegister {
 
   private def handleCommand(userRegisterId: String, state: State, command: Command): ReplyEffect[Event, State] = {
     command match {
-      case RegisterUser(user, replyTo) => Effect.persist(UserRegistered(userRegisterId, user)).thenReply(replyTo) {
-        state => StatusReply.success(state.users(user.email))
+      case RegisterUser(user, replyTo) => {
+        if (state.hasUser(user)) Effect.reply(replyTo)(StatusReply.Error("Email already in use."))
+        else Effect.persist(UserRegistered(userRegisterId, user)).thenReply(replyTo) {
+          state => StatusReply.success(state.users(user.email))
+        }
       }
     }
   }
