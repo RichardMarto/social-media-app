@@ -6,8 +6,7 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import com.typesafe.config.ConfigFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
-import socialmedia.core.{Command, Event}
-import socialmedia.core.user.{Post, User, UserRegistration}
+import socialmedia.core.{Command, Event, Post, User, UserRegistration}
 
 object UserRegistrationSpec {
   val config = ConfigFactory
@@ -33,7 +32,7 @@ class UserRegistrationSpec extends ScalaTestWithActorTestKit(UserRegistrationSpe
     EventSourcedBehaviorTestKit[
       Command,
       Event,
-      UserRegistration.State](system, UserRegistration(userRegisterId))
+      UserRegistration.State](system, UserRegistration(userRegisterId, "projectionTag"))
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -66,7 +65,7 @@ class UserRegistrationSpec extends ScalaTestWithActorTestKit(UserRegistrationSpe
       eventSourcedTestKit.runCommand[StatusReply[User]](replyTo => UserRegistration.RegisterUser(aUser, replyTo))
       val result = eventSourcedTestKit.runCommand[StatusReply[Post]](replyTo => UserRegistration.PostPost(aUser.email, aPost, replyTo))
       result.reply should ===(StatusReply.Success(aPost))
-      result.event should ===(UserRegistration.PostPosted(aUser.email, aPost))
+      result.event should ===(UserRegistration.PostPosted(aPost))
     }
 
     "throw an error when trying to post for a email not registered" in {

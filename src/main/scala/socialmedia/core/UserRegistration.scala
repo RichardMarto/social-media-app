@@ -1,15 +1,13 @@
-package socialmedia.core.user
+package socialmedia.core
 
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, SupervisorStrategy}
-import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityContext, EntityTypeKey}
 import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect, RetentionCriteria}
 import org.slf4j.LoggerFactory
-import socialmedia.core.{CborSerializable, Command, Event}
 
 import scala.collection.mutable
-import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
 
 object UserRegistration {
@@ -18,19 +16,26 @@ object UserRegistration {
   val EntityKey: EntityTypeKey[Command] =
     EntityTypeKey[Command]("UserRegistration")
 
+  val tags = Vector.tabulate(5)(i => s"user-$i")
+
   def init(system: ActorSystem[_]): Unit = {
-    ClusterSharding(system).init(Entity(EntityKey) { entityContext =>
-      UserRegistration(entityContext.entityId)
-    })
+    val behaviorFactory: EntityContext[Command] => Behavior[Command] = {
+      entityContext =>
+        val i = math.abs(entityContext.entityId.hashCode % tags.size)
+        val selectedTag = tags(i)
+        UserRegistration(entityContext.entityId, selectedTag)
+    }
+    ClusterSharding(system).init(Entity(EntityKey)(behaviorFactory))
   }
 
-  def apply(userRegisterId: String): Behavior[Command] = {
+  def apply(userRegisterId: String, projectionTag: String): Behavior[Command] = {
     EventSourcedBehavior
       .withEnforcedReplies[Command, Event, State](
         persistenceId = PersistenceId(EntityKey.name, userRegisterId),
         emptyState = State.empty,
         commandHandler = (state, command) => handleCommand(state, command),
         eventHandler = (state, event) => handleEvent(state, event))
+      .withTagger(_ => Set(projectionTag))
       .withRetention(RetentionCriteria
         .snapshotEvery(numberOfEvents = 100, keepNSnapshots = 3))
       .onPersistFailure(
@@ -44,8 +49,8 @@ object UserRegistration {
       users += (user.email -> user)
       this
     }
-    def update(email: String, post: Post): State = {
-      posts += (email -> post)
+    def update(post: Post): State = {
+      posts += (post.author -> post)
       this
     }
     def hasUser(email: String): Boolean = users.contains(email)
@@ -59,7 +64,7 @@ object UserRegistration {
   final case class RegisterUser(user: User, replyTo: ActorRef[StatusReply[User]]) extends Command
   final case class PostPost(email: String, post: Post, replyTo: ActorRef[StatusReply[Post]]) extends Command
   final case class UserRegistered(user: User) extends Event
-  final case class PostPosted(email: String, post: Post) extends Event
+  final case class PostPosted(post: Post) extends Event
 
   private def handleCommand(state: State, command: Command): ReplyEffect[Event, State] = {
     command match {
@@ -71,7 +76,7 @@ object UserRegistration {
       }
       case PostPost(email, post, replyTo) => {
         if (state.hasUser(email))
-          Effect.persist(PostPosted(email, post)).thenReply(replyTo) {
+          Effect.persist(PostPosted(post)).thenReply(replyTo) {
             _ => StatusReply.success(post)
           }
         else Effect.reply(replyTo)(StatusReply.Error("User don't exist."))
@@ -82,7 +87,7 @@ object UserRegistration {
   private def handleEvent(state: State, event: Event): State = {
     event match {
       case UserRegistered(user) => state.update(user)
-      case PostPosted(email, post) => state.update(email, post)
+      case PostPosted(post) => state.update(post)
     }
   }
 }

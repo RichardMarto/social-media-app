@@ -1,42 +1,49 @@
-package socialmedia.adapters.service
+package socialmedia.adapters.grpc
 
-import akka.actor.typed.ActorSystem
+import akka.actor.typed.{ActorSystem, DispatcherSelector}
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.grpc.GrpcServiceException
 import akka.http.scaladsl.model.DateTime
 import akka.util.Timeout
 import io.grpc.Status
 import org.slf4j.{Logger, LoggerFactory}
-import socialmedia.core.user.UserRegistration
-import socialmedia.proto.{Post, PostPostRequest, RegisterUserRequest, User, UserRegistrationService}
+import socialmedia.adapters.repository.{FeedRepository, ScalikeJdbcSession}
+import socialmedia.core
+import socialmedia.core.UserRegistration
+import socialmedia.proto.{Feed, GetFeedFromRequest, Post, PostPostRequest, RegisterUserRequest, User, UserRegistrationService}
 
-import scala.concurrent.{Future, TimeoutException}
+import scala.concurrent.{ExecutionContext, Future, TimeoutException}
 
-class UserRegistrationServiceImpl(system: ActorSystem[_]) extends UserRegistrationService {
+class UserRegistrationServiceImpl(system: ActorSystem[_], feedRepository: FeedRepository) extends UserRegistrationService {
   import system.executionContext
 
   private val log: Logger = LoggerFactory.getLogger(getClass)
+  private val sharding = ClusterSharding(system)
+
+  private val blockingJdbcExecutor: ExecutionContext =
+    system.dispatchers.lookup(
+      DispatcherSelector
+        .fromConfig("akka.projection.jdbc.blocking-jdbc-dispatcher")
+    )
 
   implicit private val timeout: Timeout =
-    Timeout.create(
-      system.settings.config.getDuration("user-registration-service.ask-timeout"))
-
-  private val sharding = ClusterSharding(system)
+  Timeout.create(
+  system.settings.config.getDuration("user-registration-grpc.ask-timeout"))
 
   override def registerUser(request: RegisterUserRequest): Future[User] = {
     val user: User = User(request.name, request.email)
     log.info(s"Registering user with email {}", user.email)
     val entityRef = sharding.entityRefFor(UserRegistration.EntityKey, request.email.substring(0, 2).hashCode.toString)
-    val reply: Future[socialmedia.core.user.User] = entityRef.askWithStatus(UserRegistration.RegisterUser(socialmedia.core.user.User(user.name, user.email), _))
+    val reply: Future[core.User] = entityRef.askWithStatus(UserRegistration.RegisterUser(core.User(user.name, user.email), _))
     val response: Future[socialmedia.proto.User] = reply.map(u => socialmedia.proto.User(u.name, user.email))
     convertError(response)
   }
 
   override def postPost(request: PostPostRequest): Future[Post] = {
     log.info(s"Posting for user with email {}", request.author)
-    val post: socialmedia.core.user.Post = socialmedia.core.user.Post(request.content, request.image, DateTime.now.toString(), request.author)
+    val post: core.Post = core.Post(request.content, request.image, DateTime.now.toString(), request.author)
     val entityRef = sharding.entityRefFor(UserRegistration.EntityKey, request.author.hashCode.toString)
-    val reply: Future[socialmedia.core.user.Post] = entityRef.askWithStatus(UserRegistration.PostPost(request.author, post, _))
+    val reply: Future[core.Post] = entityRef.askWithStatus(UserRegistration.PostPost(request.author, post, _))
     val response: Future[socialmedia.proto.Post] = reply.map(u => socialmedia.proto.Post(post.content, post.image, post.date, post.author))
     convertError(response)
   }
@@ -54,4 +61,11 @@ class UserRegistrationServiceImpl(system: ActorSystem[_]) extends UserRegistrati
     }
   }
 
+  override def getFeedFrom(request: GetFeedFromRequest): Future[Feed] = {
+    Future {
+      ScalikeJdbcSession.withSession {
+        session => feedRepository.getPostsByAuthorEmail(session, request.email)
+      }.collect(post => Post(post.content, post.image, post.date, post.author))
+    }.map(a => Feed(a))
+  }
 }

@@ -57,7 +57,7 @@ object ScalikeJdbcSetup {
 
     dataSource.setDriverClassName(config.getString("driver"))
     dataSource.setJdbcUrl(config.getString("url"))
-    dataSource.setUsername(config.getString("userregister"))
+    dataSource.setUsername(config.getString("user"))
     dataSource.setPassword(config.getString("password"))
 
     dataSource
