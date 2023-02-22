@@ -1,6 +1,6 @@
 package socialmedia.adapter.grpc
 
-import akka.actor.typed.{ActorSystem}
+import akka.actor.typed.ActorSystem
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.util.Timeout
 import org.slf4j.{Logger, LoggerFactory}

@@ -9,6 +9,7 @@ import akka.util.Timeout
 import org.slf4j.{Logger, LoggerFactory}
 import socialmedia.adapter.repository.{FeedRepository, ScalikeJdbcSession}
 import socialmedia.core.UserRegistration
+import socialmedia.model.PostMapper
 import socialmedia.proto._
 
 import scala.concurrent.Future
@@ -25,12 +26,16 @@ class PostServiceImpl(system: ActorSystem[_], feedRepository: FeedRepository) ex
       system.settings.config.getDuration("social-media.ask-timeout"))
 
   override def postPost(in: PostPostRequest): Future[Post] = {
-    log.info(s"Posting for user with email {}", in.author)
-    val post: socialmedia.model.Post = socialmedia.model.Post(in.content, in.image, DateTime.now.toString(), in.author)
-    val entityRef = sharding.entityRefFor(UserRegistration.EntityKey, in.author.hashCode.toString)
-    val reply: Future[socialmedia.model.Post] = entityRef.askWithStatus(UserRegistration.PostPost(in.author, post, _))
-    val response: Future[socialmedia.proto.Post] = reply.map(u => socialmedia.proto.Post(post.content, post.image, post.date, post.author))
-    convertError(response)(system)
+    in.post match {
+      case Some(protoPost) => {
+        log.info(s"Posting for user with email {}", protoPost.author)
+        val post: socialmedia.model.Post = PostMapper.toModel(protoPost, DateTime.now)
+        val entityRef = sharding.entityRefFor(UserRegistration.EntityKey, post.author.hashCode.toString)
+        val reply: Future[socialmedia.model.Post] = entityRef.askWithStatus(UserRegistration.PostPost(post.author, post, _))
+        val response: Future[socialmedia.proto.Post] = reply.map(PostMapper.toProto)
+        convertError(response)(system)
+      }
+    }
   }
 
   override def getFeed(in: socialmedia.proto.GetFeedRequest): Source[Post, NotUsed] = {
@@ -38,12 +43,12 @@ class PostServiceImpl(system: ActorSystem[_], feedRepository: FeedRepository) ex
       case Some(author) => Source(
         ScalikeJdbcSession.withSession {
           session => feedRepository.getPostsByAuthor(session, author)
-        }.map(post => Post(post.content, post.image, post.date, post.author))
+        }.map(PostMapper.toProto)
       )
       case None => Source(
         ScalikeJdbcSession.withSession {
           session => feedRepository.getPosts(session)
-        }.map(post => Post(post.content, post.image, post.date, post.author))
+        }.map(PostMapper.toProto)
       )
     }
   }

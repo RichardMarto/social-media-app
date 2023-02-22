@@ -26,7 +26,7 @@ class UserRegistrationSpec extends ScalaTestWithActorTestKit(UserRegistrationSpe
   private val aUser = User("Test Testson", "test_testson@testmail.com")
   private val anotherUser = User("Test Testson jr", "test.jr@testmail.com")
   private val anotherUserWithDuplicatedEmail = User("Test Testson 3rd", "test_testson@testmail.com")
-  private val aPost = Post("Blablabla", "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...", "20/02/2022", "test_testson@testmail.com")
+  private val aPost = Post(1, "Blablabla", "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...", "20/02/2022", "test_testson@testmail.com")
 
   private val userRegisterId = "userRegister"
   private val eventSourcedTestKit =

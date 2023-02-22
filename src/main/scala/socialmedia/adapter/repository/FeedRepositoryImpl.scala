@@ -1,6 +1,6 @@
 package socialmedia.adapter.repository
 
-import scalikejdbc.{DBSession, scalikejdbcSQLInterpolationImplicitDef}
+import scalikejdbc.{DBSession, WrappedResultSet, scalikejdbcSQLInterpolationImplicitDef}
 import socialmedia.model.Post
 
 class FeedRepositoryImpl extends FeedRepository {
@@ -24,6 +24,7 @@ class FeedRepositoryImpl extends FeedRepository {
       }
     }
   }
+
   override def getPosts(session: ScalikeJdbcSession): List[Post] = {
     if (session.db.isTxAlreadyStarted) {
       session.db.withinTx { implicit dbSession =>
@@ -37,14 +38,15 @@ class FeedRepositoryImpl extends FeedRepository {
   }
 
   private def select(email: String)(implicit dbSession: DBSession) = {
-    dbSession.list("SELECT * FROM post WHERE author = ?", email) { rs =>
-      Post(content = rs.string("content"), image = rs.string("image"), date = rs.string("date"), author = rs.string("author"))
-    }
+    dbSession.list("SELECT * FROM post WHERE author = ?", email)(toPost)
   }
 
   private def select()(implicit dbSession: DBSession) = {
-    dbSession.list("SELECT * FROM post") { rs =>
-      Post(content = rs.string("content"), image = rs.string("image"), date = rs.string("date"), author = rs.string("author"))
-    }
+    dbSession.list("SELECT * FROM post")(toPost)
+  }
+
+  private def toPost = {
+    rs: WrappedResultSet =>
+      Post(id = rs.int("id"), content = rs.string("content"), image = rs.string("image"), date = rs.string("date"), author = rs.string("author"))
   }
 }

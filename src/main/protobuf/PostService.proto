@@ -11,10 +11,7 @@ service PostService {
 }
 
 message PostPostRequest {
-    string content = 1;
-    string image = 2;
-    string date = 3;
-    string author = 4;
+    Post post = 1;
 }
 
 message GetFeedRequest {
@@ -22,8 +19,15 @@ message GetFeedRequest {
 }
 
 message Post {
-    string content = 1;
-    string image = 2;
-    string date = 3;
-    string author = 4;
+    int64 id = 1;
+    string content = 2;
+    string image = 3;
+    Date date = 4;
+    string author = 5;
+}
+
+message Date {
+    int32 year = 1;
+    int32 month = 2;
+    int32 day = 3;
 }
