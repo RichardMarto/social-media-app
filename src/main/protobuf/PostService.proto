@@ -5,15 +5,9 @@ option java_package = "socialmedia.proto";
 
 package socialmedia;
 
-service UserRegistrationService {
-    rpc RegisterUser (RegisterUserRequest) returns (User) {}
+service PostService {
     rpc PostPost (PostPostRequest) returns (Post) {}
-    rpc GetFeedFrom (GetFeedFromRequest) returns (Feed) {}
-}
-
-message RegisterUserRequest {
-    string name = 1;
-    string email = 2;;
+    rpc GetFeed (GetFeedRequest) returns (stream Post) {}
 }
 
 message PostPostRequest {
@@ -23,13 +17,8 @@ message PostPostRequest {
     string author = 4;
 }
 
-message GetFeedFromRequest {
-    string email = 1;
-}
-
-message User {
-    string name = 1;
-    string email = 2;
+message GetFeedRequest {
+    optional string author = 1;
 }
 
 message Post {
@@ -38,8 +27,3 @@ message Post {
     string date = 3;
     string author = 4;
 }
-
-message Feed {
-    repeated Post posts = 1;
-}
-

@@ -13,7 +13,7 @@ class FeedRepositoryImpl extends FeedRepository {
     }
   }
 
-  override def getPostsByAuthorEmail(session: ScalikeJdbcSession, email: String): List[Post] = {
+  override def getPostsByAuthor(session: ScalikeJdbcSession, email: String): List[Post] = {
     if (session.db.isTxAlreadyStarted) {
       session.db.withinTx { implicit dbSession =>
         select(email)
@@ -24,9 +24,26 @@ class FeedRepositoryImpl extends FeedRepository {
       }
     }
   }
+  override def getPosts(session: ScalikeJdbcSession): List[Post] = {
+    if (session.db.isTxAlreadyStarted) {
+      session.db.withinTx { implicit dbSession =>
+        select()
+      }
+    } else {
+      session.db.readOnly { implicit dbSession =>
+        select()
+      }
+    }
+  }
 
   private def select(email: String)(implicit dbSession: DBSession) = {
     dbSession.list("SELECT * FROM post WHERE author = ?", email) { rs =>
+      Post(content = rs.string("content"), image = rs.string("image"), date = rs.string("date"), author = rs.string("author"))
+    }
+  }
+
+  private def select()(implicit dbSession: DBSession) = {
+    dbSession.list("SELECT * FROM post") { rs =>
       Post(content = rs.string("content"), image = rs.string("image"), date = rs.string("date"), author = rs.string("author"))
     }
   }

@@ -6,7 +6,7 @@ import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import org.slf4j.LoggerFactory
 import socialmedia.adapter.repository.{FeedRepositoryImpl, ScalikeJdbcSetup}
-import socialmedia.adapter.grpc.{UserRegistrationServer, UserRegistrationServiceImpl}
+import socialmedia.adapter.grpc.{PostServiceImpl, UserRegistrationServer, UserServiceImpl}
 import socialmedia.core.{FeedProjection, UserRegistration}
 
 import scala.util.control.NonFatal
@@ -33,16 +33,16 @@ object Main {
     ScalikeJdbcSetup.init(system)
     val feedRepository = new FeedRepositoryImpl()
     FeedProjection.init(system, feedRepository)
-    val grpcInterface =
-      system.settings.config.getString("user-registration-service.grpc.interface")
-    val grpcPort =
-      system.settings.config.getInt("user-registration-service.grpc.port")
-    val grpcService = new UserRegistrationServiceImpl(system, feedRepository)
+    val grpcInterface = system.settings.config.getString("social-media.grpc.interface")
+    val grpcPort = system.settings.config.getInt("social-media.grpc.port")
+    val userGrpcService = new UserServiceImpl(system)
+    val postGrpcService = new PostServiceImpl(system, feedRepository)
     UserRegistrationServer.start(
       grpcInterface,
       grpcPort,
       system,
-      grpcService
+      userGrpcService,
+      postGrpcService
     )
   }
 
