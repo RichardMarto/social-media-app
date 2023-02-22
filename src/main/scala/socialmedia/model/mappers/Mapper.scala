@@ -1,4 +1,4 @@
-package socialmedia.model
+package socialmedia.model.mappers
 
 trait Mapper[M, P] {
   def toModel(proto: P): M

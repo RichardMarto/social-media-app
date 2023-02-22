@@ -7,11 +7,21 @@ package socialmedia;
 
 service PostService {
     rpc PostPost (PostPostRequest) returns (Post) {}
+    rpc UpdatePost (UpdatePostRequest) returns (Post) {}
     rpc GetFeed (GetFeedRequest) returns (stream Post) {}
 }
 
 message PostPostRequest {
-    Post post = 1;
+    string content = 1;
+    string image = 2;
+    string author = 3;
+}
+
+message UpdatePostRequest {
+    string id = 1;
+    string content = 2;
+    string image = 3;
+    string author = 4;
 }
 
 message GetFeedRequest {
@@ -19,7 +29,7 @@ message GetFeedRequest {
 }
 
 message Post {
-    int64 id = 1;
+    optional string id = 1;
     string content = 2;
     string image = 3;
     Date date = 4;

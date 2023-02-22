@@ -10,6 +10,7 @@ class UserRepositoryImpl extends UserRepository {
     session.db.withinTx { implicit dbSession =>
       sql"""
            INSERT INTO public.user (email, name) VALUES (${user.email}, ${user.name})
+           ON CONFLICT (email) DO UPDATE SET name = ${user.name}
          """.executeUpdate().apply()
     }
   }

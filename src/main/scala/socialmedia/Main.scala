@@ -5,8 +5,10 @@ import akka.actor.typed.ActorSystem
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import org.slf4j.LoggerFactory
+import socialmedia.adapter.grpc.post.PostServiceImpl
 import socialmedia.adapter.repository.ScalikeJdbcSetup
-import socialmedia.adapter.grpc.{GrpcServer, PostServiceImpl, UserServiceImpl}
+import socialmedia.adapter.grpc.GrpcServer
+import socialmedia.adapter.grpc.user.UserServiceImpl
 import socialmedia.adapter.repository.post.PostRepositoryImpl
 import socialmedia.adapter.repository.user.UserRepositoryImpl
 import socialmedia.core.post.{PostEntity, PostProjection}

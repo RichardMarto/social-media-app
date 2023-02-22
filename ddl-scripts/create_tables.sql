@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS public.snapshot (
     PRIMARY KEY(persistence_id, sequence_number)
     );
 
---drop table if exists public.akka_projection_offset_store;
+--drop table if getByEmail public.akka_projection_offset_store;
 
 CREATE TABLE IF NOT EXISTS public.akka_projection_offset_store (
     projection_name VARCHAR(255) NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS public.akka_projection_offset_store (
 
 CREATE INDEX IF NOT EXISTS projection_name_index ON public.akka_projection_offset_store (projection_name);
 
---drop table if exists public.akka_projection_management;
+--drop table if getByEmail public.akka_projection_management;
 
 CREATE TABLE IF NOT EXISTS public.akka_projection_management (
     projection_name VARCHAR(255) NOT NULL,
@@ -83,13 +83,8 @@ CREATE TABLE IF NOT EXISTS public.user (
     PRIMARY KEY (email));
 
 CREATE TABLE IF NOT EXISTS public.post (
-    id SERIAL NOT NULL,
     content VARCHAR(255) NOT NULL,
     image VARCHAR(255),
-    date VARCHAR(255) NOT NULL,
+    date TIMESTAMP  NOT NULL,
     author VARCHAR(255) NOT NULL,
-    PRIMARY KEY (id),
-    CONSTRAINT fk_author
-    FOREIGN KEY(author)
-    REFERENCES public.user(email)
-    ON DELETE CASCADE);
+    PRIMARY KEY (author, date));

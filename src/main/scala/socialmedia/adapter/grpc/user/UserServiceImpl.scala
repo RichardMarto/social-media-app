@@ -1,12 +1,14 @@
-package socialmedia.adapter.grpc
+package socialmedia.adapter.grpc.user
 
 import akka.actor.typed.ActorSystem
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.util.Timeout
 import org.slf4j.{Logger, LoggerFactory}
+import socialmedia.adapter.grpc.ErrorConverter
 import socialmedia.adapter.repository.ScalikeJdbcSession
 import socialmedia.adapter.repository.user.UserRepository
 import socialmedia.core.user.UserEntity
+import socialmedia.model.mappers.impl.UserMapper
 import socialmedia.proto.{RegisterUserRequest, User, UserService}
 
 import scala.concurrent.Future
@@ -31,9 +33,9 @@ class UserServiceImpl(system: ActorSystem[_], userRepository: UserRepository) ex
     convertError(response)(system)
   }
 
-  def exists(email: String): Boolean = {
+  def getByEmail(email: String): Option[User] = {
     ScalikeJdbcSession.withSession {
-      session => userRepository.getByEmail(session, email)
-    }.isDefined
+      session => userRepository.getByEmail(session, email).map(UserMapper.toProto)
+    }
   }
 }

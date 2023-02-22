@@ -1,16 +1,20 @@
 package socialmedia.adapter.repository.post
 
+import akka.http.scaladsl.model.DateTime
 import scalikejdbc.{DBSession, WrappedResultSet, scalikejdbcSQLInterpolationImplicitDef}
 import socialmedia.adapter.repository.ScalikeJdbcSession
 import socialmedia.model.Post
 
+import java.time.ZonedDateTime
+
 class PostRepositoryImpl extends PostRepository {
 
-  override def save(session: ScalikeJdbcSession, post: Post): Unit = {
+  override def update(session: ScalikeJdbcSession, post: Post): Unit = {
     session.db.withinTx { implicit dbSession =>
       sql"""
-           INSERT INTO post (content, image, date, author) VALUES (${post.content}, ${post.image}, ${post.date}, ${post.author})
-         """.executeUpdate().apply()
+            INSERT INTO post (content, image, date, author) VALUES (${post.content}, ${post.image}, ${post.date}, ${post.author})
+            ON CONFLICT (author, date) DO UPDATE SET (content, image) = (${post.content}, ${post.image})
+            """.executeUpdate().apply()
     }
   }
 
@@ -48,6 +52,12 @@ class PostRepositoryImpl extends PostRepository {
 
   private def toPost = {
     rs: WrappedResultSet =>
-      Post(id = rs.int("id"), content = rs.string("content"), image = rs.string("image"), date = rs.string("date"), author = rs.string("author"))
+      Post(
+        id = Some(rs.string("author") + " - "+ rs.zonedDateTime("date")),
+        content = rs.string("content"),
+        image = rs.string("image"),
+        date = rs.zonedDateTime("date"),
+        author = rs.string("author")
+      )
   }
 }

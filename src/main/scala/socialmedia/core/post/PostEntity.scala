@@ -2,14 +2,17 @@ package socialmedia.core.post
 
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, SupervisorStrategy}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityContext, EntityTypeKey}
+import akka.http.scaladsl.model.DateTime
 import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect, RetentionCriteria}
 import org.slf4j.LoggerFactory
 import socialmedia.model.{CborSerializable, Command, Event, Post}
 
+import java.time.ZonedDateTime
 import scala.collection.mutable
 import scala.concurrent.duration.DurationInt
+import scala.util.Try
 
 object PostEntity {
   private val log = LoggerFactory.getLogger(getClass)
@@ -44,9 +47,11 @@ object PostEntity {
       )
   }
 
-  final case class State(posts: mutable.HashMap[String, Post]) extends CborSerializable {
+  final case class State(posts: mutable.HashMap[String, mutable.HashMap[String, Post]]) extends CborSerializable {
     def update(post: Post): State = {
-      posts += (post.author -> post)
+      val authorPosts: mutable.HashMap[String, Post] = Try(posts(post.author)).getOrElse(mutable.HashMap.empty)
+      post.id.foreach(id => authorPosts += (id -> post))
+      posts += (post.author -> authorPosts)
       this
     }
   }
@@ -55,21 +60,32 @@ object PostEntity {
     val empty = State(posts = mutable.HashMap.empty)
   }
 
-  final case class PostPost(post: Post, replyTo: ActorRef[StatusReply[Post]]) extends Command
-  final case class PostPosted(post: Post) extends Event
+  final case class CreatePost(content: String, image: String, author: String, replyTo: ActorRef[StatusReply[Post]]) extends Command
+  final case class UpdatePost(id: String, content: String, image: String, author: String, replyTo: ActorRef[StatusReply[Post]]) extends Command
+  final case class PostCreated(post: Post) extends Event
+  final case class PostUpdated(post: Post) extends Event
 
   private def handleCommand(state: State, command: Command): ReplyEffect[Event, State] = {
     command match {
-      case PostPost(post, replyTo) =>
-          Effect.persist(PostPosted(post)).thenReply(replyTo) {
-            _ => StatusReply.success(post)
+      case CreatePost(content, image, author , replyTo) =>
+          val now = ZonedDateTime.now
+          val postWithId = Post(id = Some(author + " - " + now.toString()), content, image, now, author)
+          Effect.persist(PostCreated(postWithId)).thenReply(replyTo) {
+            _ => StatusReply.success(postWithId)
+          }
+      case UpdatePost(id, image, content, author, replyTo) =>
+          val post: Post = state.posts(author)(id)
+          val updatePost = post.copy(content = content, image = image)
+          Effect.persist(PostCreated(updatePost)).thenReply(replyTo) {
+            _ => StatusReply.success(updatePost)
           }
     }
   }
 
   private def handleEvent(state: State, event: Event): State = {
     event match {
-      case PostPosted(post) => state.update(post)
+      case PostCreated(post) => state.update(post)
+      case PostUpdated(post) => state.update(post)
     }
   }
 }
