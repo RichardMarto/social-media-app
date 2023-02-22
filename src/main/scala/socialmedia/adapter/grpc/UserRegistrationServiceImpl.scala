@@ -19,15 +19,9 @@ class UserRegistrationServiceImpl(system: ActorSystem[_], feedRepository: FeedRe
   private val log: Logger = LoggerFactory.getLogger(getClass)
   private val sharding = ClusterSharding(system)
 
-  private val blockingJdbcExecutor: ExecutionContext =
-    system.dispatchers.lookup(
-      DispatcherSelector
-        .fromConfig("akka.projection.jdbc.blocking-jdbc-dispatcher")
-    )
-
   implicit private val timeout: Timeout =
   Timeout.create(
-  system.settings.config.getDuration("user-registration-grpc.ask-timeout"))
+  system.settings.config.getDuration("user-registration-service.ask-timeout"))
 
   override def registerUser(request: RegisterUserRequest): Future[User] = {
     val user: User = User(request.name, request.email)

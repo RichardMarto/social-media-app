@@ -1,7 +1,7 @@
 package socialmedia.adapter.repository
 
 import scalikejdbc.{DBSession, scalikejdbcSQLInterpolationImplicitDef}
-import socialmedia.core.Post
+import socialmedia.model.Post
 
 class FeedRepositoryImpl extends FeedRepository {
 

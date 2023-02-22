@@ -34,9 +34,9 @@ object Main {
     val feedRepository = new FeedRepositoryImpl()
     FeedProjection.init(system, feedRepository)
     val grpcInterface =
-      system.settings.config.getString("user-registration-grpc.grpc.interface")
+      system.settings.config.getString("user-registration-service.grpc.interface")
     val grpcPort =
-      system.settings.config.getInt("user-registration-grpc.grpc.port")
+      system.settings.config.getInt("user-registration-service.grpc.port")
     val grpcService = new UserRegistrationServiceImpl(system, feedRepository)
     UserRegistrationServer.start(
       grpcInterface,

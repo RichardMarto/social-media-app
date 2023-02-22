@@ -6,7 +6,8 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import com.typesafe.config.ConfigFactory
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
-import socialmedia.core.{Command, Event, Post, User, UserRegistration}
+import socialmedia.core.{Command, Event, UserRegistration}
+import socialmedia.model.{Post, User}
 
 object UserRegistrationSpec {
   val config = ConfigFactory
