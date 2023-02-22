@@ -1,11 +1,12 @@
-package socialmedia.adapter.repository
+package socialmedia.adapter.repository.post
 
 import scalikejdbc.{DBSession, WrappedResultSet, scalikejdbcSQLInterpolationImplicitDef}
+import socialmedia.adapter.repository.ScalikeJdbcSession
 import socialmedia.model.Post
 
-class FeedRepositoryImpl extends FeedRepository {
+class PostRepositoryImpl extends PostRepository {
 
-  override def post(session: ScalikeJdbcSession, post: Post): Unit = {
+  override def save(session: ScalikeJdbcSession, post: Post): Unit = {
     session.db.withinTx { implicit dbSession =>
       sql"""
            INSERT INTO post (content, image, date, author) VALUES (${post.content}, ${post.image}, ${post.date}, ${post.author})
@@ -38,11 +39,11 @@ class FeedRepositoryImpl extends FeedRepository {
   }
 
   private def select(email: String)(implicit dbSession: DBSession) = {
-    dbSession.list("SELECT * FROM post WHERE author = ?", email)(toPost)
+    dbSession.list(s"SELECT * FROM post WHERE author = '$email' LIMIT 10")(toPost)
   }
 
   private def select()(implicit dbSession: DBSession) = {
-    dbSession.list("SELECT * FROM post")(toPost)
+    dbSession.list("SELECT * FROM post LIMIT 10")(toPost)
   }
 
   private def toPost = {

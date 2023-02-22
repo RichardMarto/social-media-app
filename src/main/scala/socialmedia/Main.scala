@@ -5,18 +5,21 @@ import akka.actor.typed.ActorSystem
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import org.slf4j.LoggerFactory
-import socialmedia.adapter.repository.{FeedRepositoryImpl, ScalikeJdbcSetup}
-import socialmedia.adapter.grpc.{PostServiceImpl, UserRegistrationServer, UserServiceImpl}
-import socialmedia.core.{FeedProjection, UserRegistration}
+import socialmedia.adapter.repository.ScalikeJdbcSetup
+import socialmedia.adapter.grpc.{GrpcServer, PostServiceImpl, UserServiceImpl}
+import socialmedia.adapter.repository.post.PostRepositoryImpl
+import socialmedia.adapter.repository.user.UserRepositoryImpl
+import socialmedia.core.post.{PostEntity, PostProjection}
+import socialmedia.core.user.{UserEntity, UserProjection}
 
 import scala.util.control.NonFatal
 
 object Main {
 
-  val logger = LoggerFactory.getLogger("socialmedia.userregister.Main")
+  val logger = LoggerFactory.getLogger("socialmedia.Main")
 
   def main(args: Array[String]): Unit = {
-    val system = ActorSystem[Nothing](Behaviors.empty, "UserRegistrationService")
+    val system = ActorSystem[Nothing](Behaviors.empty, "SocialMediaService")
     try {
       init(system)
     } catch {
@@ -29,20 +32,23 @@ object Main {
   def init(system: ActorSystem[_]): Unit = {
     AkkaManagement(system).start()
     ClusterBootstrap(system).start()
-    UserRegistration.init(system)
+    UserEntity.init(system)
+    PostEntity.init(system)
     ScalikeJdbcSetup.init(system)
-    val feedRepository = new FeedRepositoryImpl()
-    FeedProjection.init(system, feedRepository)
+    val userRepository = new UserRepositoryImpl()
+    val postRepository = new PostRepositoryImpl()
+    UserProjection.init(system, userRepository)
+    PostProjection.init(system, postRepository)
     val grpcInterface = system.settings.config.getString("social-media.grpc.interface")
     val grpcPort = system.settings.config.getInt("social-media.grpc.port")
-    val userGrpcService = new UserServiceImpl(system)
-    val postGrpcService = new PostServiceImpl(system, feedRepository)
-    UserRegistrationServer.start(
+    val userService = new UserServiceImpl(system, userRepository)
+    val postService = new PostServiceImpl(system, postRepository, userService)
+    GrpcServer.start(
       grpcInterface,
       grpcPort,
       system,
-      userGrpcService,
-      postGrpcService
+      userService,
+      postService
     )
   }
 

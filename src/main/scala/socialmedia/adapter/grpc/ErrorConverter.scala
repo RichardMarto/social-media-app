@@ -13,11 +13,13 @@ trait ErrorConverter {
       case _: TimeoutException =>
         Future.failed(
           new GrpcServiceException(
-            Status.UNAVAILABLE.withDescription("Operation timed out")))
+            Status.UNAVAILABLE.withDescription("Operation timed out"))
+        )
       case exc =>
         Future.failed(
           new GrpcServiceException(
-            Status.INVALID_ARGUMENT.withDescription(exc.getMessage)))
+            Status.INVALID_ARGUMENT.withDescription(exc.getMessage))
+        )
     }
   }
 }

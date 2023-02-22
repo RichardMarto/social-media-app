@@ -1,3 +1,3 @@
-package socialmedia.core
+package socialmedia.model
 
 trait Command extends CborSerializable

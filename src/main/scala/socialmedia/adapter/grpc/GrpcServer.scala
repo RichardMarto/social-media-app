@@ -11,7 +11,7 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-object UserRegistrationServer {
+object GrpcServer {
   private val log: Logger = LoggerFactory.getLogger(getClass)
   def start(interface: String, port: Int, system: ActorSystem[_], userService: UserService, postService: PostService): Unit = {
     implicit val sys: ActorSystem[_] = system
@@ -28,7 +28,7 @@ object UserRegistrationServer {
     bound.onComplete {
       case Success(binding) =>
         val address = binding.localAddress
-        log.info("UserRegistrationService is running at gRPC server {}:{}",
+        log.info("GRPC server is running at gRPC server {}:{}",
           address.getHostString,
           address.getPort)
       case Failure(ex) =>
