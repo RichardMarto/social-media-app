@@ -1,4 +1,4 @@
-package socialmedia.adapters.grpc
+package socialmedia.adapter.grpc
 
 import akka.actor.typed.{ActorSystem, DispatcherSelector}
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
@@ -7,8 +7,7 @@ import akka.http.scaladsl.model.DateTime
 import akka.util.Timeout
 import io.grpc.Status
 import org.slf4j.{Logger, LoggerFactory}
-import socialmedia.adapters.repository.{FeedRepository, ScalikeJdbcSession}
-import socialmedia.core
+import socialmedia.adapter.repository.{FeedRepository, ScalikeJdbcSession}
 import socialmedia.core.UserRegistration
 import socialmedia.proto.{Feed, GetFeedFromRequest, Post, PostPostRequest, RegisterUserRequest, User, UserRegistrationService}
 
@@ -34,16 +33,16 @@ class UserRegistrationServiceImpl(system: ActorSystem[_], feedRepository: FeedRe
     val user: User = User(request.name, request.email)
     log.info(s"Registering user with email {}", user.email)
     val entityRef = sharding.entityRefFor(UserRegistration.EntityKey, request.email.substring(0, 2).hashCode.toString)
-    val reply: Future[core.User] = entityRef.askWithStatus(UserRegistration.RegisterUser(core.User(user.name, user.email), _))
+    val reply: Future[socialmedia.model.User] = entityRef.askWithStatus(UserRegistration.RegisterUser(socialmedia.model.User(user.name, user.email), _))
     val response: Future[socialmedia.proto.User] = reply.map(u => socialmedia.proto.User(u.name, user.email))
     convertError(response)
   }
 
   override def postPost(request: PostPostRequest): Future[Post] = {
     log.info(s"Posting for user with email {}", request.author)
-    val post: core.Post = core.Post(request.content, request.image, DateTime.now.toString(), request.author)
+    val post: socialmedia.model.Post = socialmedia.model.Post(request.content, request.image, DateTime.now.toString(), request.author)
     val entityRef = sharding.entityRefFor(UserRegistration.EntityKey, request.author.hashCode.toString)
-    val reply: Future[core.Post] = entityRef.askWithStatus(UserRegistration.PostPost(request.author, post, _))
+    val reply: Future[socialmedia.model.Post] = entityRef.askWithStatus(UserRegistration.PostPost(request.author, post, _))
     val response: Future[socialmedia.proto.Post] = reply.map(u => socialmedia.proto.Post(post.content, post.image, post.date, post.author))
     convertError(response)
   }

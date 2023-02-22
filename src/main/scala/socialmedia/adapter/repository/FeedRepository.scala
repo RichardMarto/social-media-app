@@ -1,6 +1,6 @@
-package socialmedia.adapters.repository
+package socialmedia.adapter.repository
 
-import socialmedia.core.Post
+import socialmedia.model.Post
 
 trait FeedRepository {
   def post(session: ScalikeJdbcSession, post: Post)

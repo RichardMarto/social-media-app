@@ -5,8 +5,8 @@ import akka.actor.typed.ActorSystem
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import org.slf4j.LoggerFactory
-import socialmedia.adapters.repository.{FeedRepositoryImpl, ScalikeJdbcSetup}
-import socialmedia.adapters.grpc.{UserRegistrationServer, UserRegistrationServiceImpl}
+import socialmedia.adapter.repository.{FeedRepositoryImpl, ScalikeJdbcSetup}
+import socialmedia.adapter.grpc.{UserRegistrationServer, UserRegistrationServiceImpl}
 import socialmedia.core.{FeedProjection, UserRegistration}
 
 import scala.util.control.NonFatal

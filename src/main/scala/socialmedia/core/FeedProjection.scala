@@ -10,7 +10,7 @@ import akka.projection.eventsourced.EventEnvelope
 import akka.projection.eventsourced.scaladsl.EventSourcedProvider
 import akka.projection.jdbc.scaladsl.JdbcProjection
 import akka.projection.scaladsl.{ExactlyOnceProjection, SourceProvider}
-import socialmedia.adapters.repository.{FeedRepository, ScalikeJdbcSession}
+import socialmedia.adapter.repository.{FeedRepository, ScalikeJdbcSession}
 
 object FeedProjection {
   def init(system: ActorSystem[_], repository: FeedRepository): Unit = {

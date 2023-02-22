@@ -1,4 +1,4 @@
-package socialmedia.adapters.grpc
+package socialmedia.adapter.grpc
 
 import akka.actor.typed.ActorSystem
 import akka.grpc.scaladsl.{ServerReflection, ServiceHandler}

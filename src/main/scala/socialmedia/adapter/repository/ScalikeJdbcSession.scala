@@ -1,4 +1,4 @@
-package socialmedia.adapters.repository
+package socialmedia.adapter.repository
 
 import akka.japi.function.Function
 import akka.projection.jdbc.JdbcSession

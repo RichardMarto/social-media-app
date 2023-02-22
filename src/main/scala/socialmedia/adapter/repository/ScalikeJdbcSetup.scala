@@ -1,4 +1,4 @@
-package socialmedia.adapters.repository
+package socialmedia.adapter.repository
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.config.Config

@@ -1,4 +1,4 @@
-package socialmedia.adapters.repository
+package socialmedia.adapter.repository
 
 import scalikejdbc.{DBSession, scalikejdbcSQLInterpolationImplicitDef}
 import socialmedia.core.Post

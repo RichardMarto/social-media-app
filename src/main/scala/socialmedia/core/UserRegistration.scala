@@ -6,6 +6,7 @@ import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect, RetentionCriteria}
 import org.slf4j.LoggerFactory
+import socialmedia.model.{Post, User}
 
 import scala.collection.mutable
 import scala.concurrent.duration.DurationInt
