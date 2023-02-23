@@ -1,11 +1,8 @@
 package socialmedia.adapter.repository.post
 
-import akka.http.scaladsl.model.DateTime
 import scalikejdbc.{DBSession, WrappedResultSet, scalikejdbcSQLInterpolationImplicitDef}
 import socialmedia.adapter.repository.ScalikeJdbcSession
 import socialmedia.model.Post
-
-import java.time.ZonedDateTime
 
 class PostRepositoryImpl extends PostRepository {
 

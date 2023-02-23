@@ -11,6 +11,8 @@ Compile / scalacOptions ++= Seq(
   "-Xlint")
 Compile / javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
 
+enablePlugins(JavaAppPackaging)
+
 Test / parallelExecution := false
 Test / testOptions += Tests.Argument("-oDF")
 Test / logBuffered := false
@@ -67,3 +69,9 @@ libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc" % ScalikeJdbcVersion,
   "org.scalikejdbc" %% "scalikejdbc-config" % ScalikeJdbcVersion,
   "com.lightbend.akka" %% "akka-projection-testkit" % AkkaProjectionVersion % Test)
+
+Universal / javaOptions ++= Seq(
+  "-Dconfig.resource=local1.conf"
+)
+
+dockerExposedPorts ++= Seq(8181)

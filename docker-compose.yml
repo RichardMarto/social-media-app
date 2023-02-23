@@ -2,10 +2,15 @@ version: '2.2'
 services:
   postgres-db:
     image: postgres:latest
+    network_mode: "host"
     ports:
       - 5432:5432
     environment:
       POSTGRES_DB: social-media
       POSTGRES_USER: social-media
       POSTGRES_PASSWORD: social-media
-
+  social-media-app:
+    build: target/docker/stage
+    network_mode: "host"
+    ports:
+      - 8181:8181
