@@ -29,7 +29,7 @@ message GetFeedRequest {
 }
 
 message Post {
-    optional string id = 1;
+    string id = 1;
     string content = 2;
     string image = 3;
     Date date = 4;

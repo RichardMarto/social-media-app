@@ -2,7 +2,6 @@ package socialmedia.core.post
 
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, SupervisorStrategy}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityContext, EntityTypeKey}
-import akka.http.scaladsl.model.DateTime
 import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect, RetentionCriteria}
@@ -50,7 +49,7 @@ object PostEntity {
   final case class State(posts: mutable.HashMap[String, mutable.HashMap[String, Post]]) extends CborSerializable {
     def update(post: Post): State = {
       val authorPosts: mutable.HashMap[String, Post] = Try(posts(post.author)).getOrElse(mutable.HashMap.empty)
-      post.id.foreach(id => authorPosts += (id -> post))
+      authorPosts += (post.id -> post)
       posts += (post.author -> authorPosts)
       this
     }
@@ -69,13 +68,16 @@ object PostEntity {
     command match {
       case CreatePost(content, image, author , replyTo) =>
           val now = ZonedDateTime.now
-          val postWithId = Post(id = Some(author + " - " + now.toString()), content, image, now, author)
+          val postWithId = Post(id = author + " - " + now.toString(), content, image, now, author)
           Effect.persist(PostCreated(postWithId)).thenReply(replyTo) {
             _ => StatusReply.success(postWithId)
           }
-      case UpdatePost(id, image, content, author, replyTo) =>
-          val post: Post = state.posts(author)(id)
-          val updatePost = post.copy(content = content, image = image)
+      case UpdatePost(id, content, image, author, replyTo) =>
+        val post: Post = state.posts(author)(id)
+          val updatePost = post.copy(
+            content = if (content == null || content.isBlank || content.isEmpty) post.content else content,
+            image = if (image == null || image.isBlank || image.isEmpty) post.image else image,
+          )
           Effect.persist(PostCreated(updatePost)).thenReply(replyTo) {
             _ => StatusReply.success(updatePost)
           }

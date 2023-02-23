@@ -53,7 +53,7 @@ class PostRepositoryImpl extends PostRepository {
   private def toPost = {
     rs: WrappedResultSet =>
       Post(
-        id = Some(rs.string("author") + " - "+ rs.zonedDateTime("date")),
+        id = rs.string("author") + " - "+ rs.zonedDateTime("date"),
         content = rs.string("content"),
         image = rs.string("image"),
         date = rs.zonedDateTime("date"),
