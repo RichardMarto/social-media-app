@@ -54,19 +54,20 @@ class PostEntitySpec extends ScalaTestWithActorTestKit(PostEntitySpec.config)
       post.author shouldBe author
       val splitedId = post.id.split(" - ")
       splitedId(0) shouldBe author
-      splitedId(1).split("\\.")(0) shouldBe startingTime.split("\\.")(0)
+      splitedId(1).split("\\.")(0) should ===(startingTime.split("\\.")(0))
       result.event should ===(PostEntity.PostCreated(post))
     }
 
     "update a existing post" in {
       val oldPost = eventSourcedTestKit.runCommand[StatusReply[Post]](replyTo => PostEntity.CreatePost(content, image, author , replyTo)).reply.getValue
       val result = eventSourcedTestKit.runCommand[StatusReply[Post]](replyTo => PostEntity.UpdatePost(oldPost.id, anotherContent, anotherImage, author, replyTo))
+      result.reply shouldBe a [StatusReply[Post]]
       val post = result.reply.getValue
       post.content shouldBe anotherContent
       post.image shouldBe anotherImage
       post.author shouldBe oldPost.author
       post.id shouldBe oldPost.id
-      result.event should ===(PostEntity.PostCreated(post))
+      result.event should ===(PostEntity.PostUpdated(post))
     }
 
     "update a existing post content" in {
@@ -77,7 +78,7 @@ class PostEntitySpec extends ScalaTestWithActorTestKit(PostEntitySpec.config)
       post.image shouldBe oldPost.image
       post.author shouldBe oldPost.author
       post.id shouldBe oldPost.id
-      result.event should ===(PostEntity.PostCreated(post))
+      result.event should ===(PostEntity.PostUpdated(post))
     }
 
     "update a existing post image" in {
@@ -88,7 +89,7 @@ class PostEntitySpec extends ScalaTestWithActorTestKit(PostEntitySpec.config)
       post.image shouldBe anotherImage
       post.author shouldBe oldPost.author
       post.id shouldBe oldPost.id
-      result.event should ===(PostEntity.PostCreated(post))
+      result.event should ===(PostEntity.PostUpdated(post))
     }
   }
 }

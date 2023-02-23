@@ -78,7 +78,7 @@ object PostEntity {
             content = if (content == null || content.isBlank || content.isEmpty) post.content else content,
             image = if (image == null || image.isBlank || image.isEmpty) post.image else image,
           )
-          Effect.persist(PostCreated(updatePost)).thenReply(replyTo) {
+          Effect.persist(PostUpdated(updatePost)).thenReply(replyTo) {
             _ => StatusReply.success(updatePost)
           }
     }
